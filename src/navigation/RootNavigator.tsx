@@ -9,6 +9,7 @@ import { HomeScreen } from '../modules/home/screens/HomeScreen';
 import { LibraryScreen } from '../modules/library/screens/LibraryScreen';
 import { CvCalculatorScreen } from '../modules/tools/screens/CvCalculatorScreen';
 import { DensityScreen } from '../modules/tools/screens/DensityScreen';
+import { DoseControlScreen } from '../modules/tools/screens/DoseControlScreen';
 import { SpeedCheckScreen } from '../modules/tools/screens/SpeedCheckScreen';
 import { ToolsMenuScreen } from '../modules/tools/screens/ToolsMenuScreen';
 import { WheelCalculatorScreen } from '../modules/tools/screens/WheelCalculatorScreen'; // <--- NUEVO
@@ -70,6 +71,12 @@ export const RootNavigator = () => {
         name="Library" 
         component={LibraryScreen} 
         options={{ title: 'BIBLIOTECA' }}
+        />
+
+        <Stack.Screen 
+          name="DoseControl" 
+          component={DoseControlScreen} 
+          options={{ title: 'CONTROL DE DOSIS' }}
         />
 
       </Stack.Navigator>

@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { initDatabase } from './src/storage/sqlite';
+import { CruciBot } from './src/ui/components/CruciBot';
 
 // Mantenemos el Splash visible hasta que cargue la DB
 SplashScreen.preventAutoHideAsync();
@@ -37,9 +38,10 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
-      <StatusBar style="light" />
-      <RootNavigator />
-    </SafeAreaProvider>
+  <SafeAreaProvider>
+    <StatusBar style="light" />
+    <RootNavigator />
+    <CruciBot />
+  </SafeAreaProvider>
   );
 }
