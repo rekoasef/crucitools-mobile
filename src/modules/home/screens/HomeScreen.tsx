@@ -65,13 +65,13 @@ export const HomeScreen = () => {
 
           <View style={styles.spacer} />
 
-          <MenuCard 
+          {/* <MenuCard 
             title="Biblioteca Técnica"
             subtitle="Manuales y catálogos oficiales."
             iconName="file-document-box-multiple-outline" // Icono de documentación
             accentColor="#2B6CB0" // Azul técnico profesional
             onPress={() => navigation.navigate('Library')} 
-          />
+          /> */}
         </View>
          <Text style={styles.versionText}>v1.1.0 - Modo Offline Activo</Text>
       </View>

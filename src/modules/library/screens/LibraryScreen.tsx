@@ -1,114 +1,94 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { DOCUMENTS_CATALOG } from '../../../core/constants/documentsData';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../../../core/theme';
-import { DocumentService, LocalDocument } from '../../../storage/filesystem/documentService';
-import { Body, Card, H1, ScreenLayout } from '../../../ui/components';
+import { DocumentService } from '../../../storage/filesystem/documentService';
 
 export const LibraryScreen = () => {
-  const [documents, setDocuments] = useState<LocalDocument[]>([]);
-  const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({});
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [localFiles, setLocalFiles] = useState<Record<string, boolean>>({});
 
-  const loadStatus = async () => {
-    const list: LocalDocument[] = [];
-    for (const doc of DOCUMENTS_CATALOG) {
-      try {
-        const status = await DocumentService.getStatus(doc);
-        list.push(status);
-      } catch (e) {
-        console.log("Error cargando status:", e);
-      }
-    }
-    setDocuments(list);
-  };
+  const documents = [
+    { id: 'manual_gringa', title: 'Manual Gringa v2.0', category: 'Manuales', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' },
+    { id: 'ficha_pionera', title: 'Ficha Técnica Pionera', category: 'Fichas', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' },
+  ];
 
+  // Verificar qué archivos ya están descargados al entrar
   useEffect(() => {
-    loadStatus();
+    const checkFiles = async () => {
+      const status: Record<string, boolean> = {};
+      for (const doc of documents) {
+        status[doc.id] = await DocumentService.checkExists(doc.id);
+      }
+      setLocalFiles(status);
+    };
+    checkFiles();
   }, []);
 
-  const handlePress = async (doc: LocalDocument) => {
-    if (doc.isDownloaded && doc.localPath) {
-      await DocumentService.open(doc.localPath);
+  const handleAction = async (doc: any) => {
+    if (!DocumentService.isReady()) {
+      Alert.alert("Error", "Sistema de archivos no disponible. Desactiva el Debugger.");
+      return;
+    }
+
+    if (localFiles[doc.id]) {
+      // Si existe, lo abrimos
+      await DocumentService.openDocument(doc.id);
     } else {
-      try {
-        setLoadingMap(prev => ({ ...prev, [doc.id]: true }));
-        await DocumentService.download(doc);
-        await loadStatus(); 
-      } catch (error: any) {
-        Alert.alert('Error', error.message);
-      } finally {
-        setLoadingMap(prev => ({ ...prev, [doc.id]: false }));
+      // Si no existe, lo descargamos
+      setDownloadingId(doc.id);
+      const uri = await DocumentService.downloadDocument(doc.id, doc.url);
+      setDownloadingId(null);
+
+      if (uri) {
+        setLocalFiles(prev => ({ ...prev, [doc.id]: true }));
+        Alert.alert("Éxito", "Manual guardado para uso offline.", [
+          { text: "Abrir ahora", onPress: () => DocumentService.openDocument(doc.id) },
+          { text: "OK" }
+        ]);
+      } else {
+        Alert.alert("Error", "No se pudo descargar el archivo.");
       }
     }
-  };
-
-  const renderItem = ({ item }: { item: LocalDocument }) => {
-    const isLoading = loadingMap[item.id];
-
-    return (
-      <TouchableOpacity onPress={() => handlePress(item)} disabled={isLoading}>
-        <Card style={styles.card}>
-          <View style={styles.cardContent}>
-            <View style={[styles.iconBox, item.isDownloaded ? styles.iconDownloaded : styles.iconPending]}>
-               <Text style={styles.iconText}>PDF</Text>
-            </View>
-
-            <View style={styles.textContainer}>
-              <Text style={styles.category}>{item.category}</Text>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.status}>
-                {item.isDownloaded ? '✅ Disponible Offline' : '📥 Toca para descargar'}
-              </Text>
-            </View>
-
-            <View style={styles.actionBox}>
-              {isLoading ? (
-                <ActivityIndicator color={theme.colors.primary} />
-              ) : (
-                <Text style={styles.arrow}>{item.isDownloaded ? '👁️' : '⬇️'}</Text>
-              )}
-            </View>
-          </View>
-        </Card>
-      </TouchableOpacity>
-    );
   };
 
   return (
-    <ScreenLayout>
-      <View style={styles.container}>
-        <H1>Biblioteca Técnica</H1>
-        <Body style={styles.subtitle}>Documentación oficial disponible offline.</Body>
-        
-        <FlatList
-          data={documents}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={{ paddingBottom: 20 }}
-          showsVerticalScrollIndicator={false}
-        />
-      </View>
-    </ScreenLayout>
+    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <FlatList
+        data={documents}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <TouchableOpacity style={styles.card} onPress={() => handleAction(item)}>
+            <View style={styles.iconBox}>
+              <MaterialCommunityIcons name="file-document-multiple-outline" size={28} color={theme.colors.primary} />
+            </View>
+            <View style={styles.textContainer}>
+              <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.category}>{item.category}</Text>
+            </View>
+            
+            {downloadingId === item.id ? (
+              <ActivityIndicator color={theme.colors.primary} />
+            ) : (
+              <MaterialCommunityIcons 
+                name={localFiles[item.id] ? "eye-check" : "download"} 
+                size={22} 
+                color={localFiles[item.id] ? "#27AE60" : theme.colors.primary} 
+              />
+            )}
+          </TouchableOpacity>
+        )}
+      />
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { padding: theme.spacing.lg, flex: 1 },
-  subtitle: { marginBottom: theme.spacing.lg },
-  card: { padding: theme.spacing.md, marginBottom: theme.spacing.md },
-  cardContent: { flexDirection: 'row', alignItems: 'center' },
-  iconBox: {
-    width: 50, height: 50, borderRadius: 8,
-    justifyContent: 'center', alignItems: 'center',
-    marginRight: theme.spacing.md
-  },
-  iconPending: { backgroundColor: theme.colors.lightGray },
-  iconDownloaded: { backgroundColor: theme.colors.primary },
-  iconText: { fontWeight: 'bold', color: theme.colors.textInverse, fontSize: 12 },
-  textContainer: { flex: 1 },
-  category: { fontSize: 10, color: theme.colors.textSecondary, fontWeight: 'bold' },
-  title: { fontSize: 16, fontWeight: 'bold', color: theme.colors.textPrimary, marginBottom: 2 },
-  status: { fontSize: 12, color: theme.colors.textSecondary },
-  actionBox: { marginLeft: theme.spacing.sm },
-  arrow: { fontSize: 20 },
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  card: { flexDirection: 'row', padding: 18, backgroundColor: 'white', marginHorizontal: 16, marginTop: 12, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: theme.colors.border, elevation: 3 },
+  iconBox: { backgroundColor: theme.colors.primary + '10', padding: 8, borderRadius: 8 },
+  textContainer: { flex: 1, marginLeft: 16 },
+  title: { fontSize: 16, fontWeight: 'bold', color: theme.colors.textPrimary },
+  category: { fontSize: 12, color: theme.colors.textSecondary, marginTop: 2 }
 });
