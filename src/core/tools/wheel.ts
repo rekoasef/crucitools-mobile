@@ -13,7 +13,7 @@ export interface WheelModel {
 
 // Base de datos estática (Copiada de tu web)
 export const WHEEL_DATA: Record<string, WheelModel> = {
-  'PSIII Y PIV': {
+  'Pionera': {
     headers: ['Cubierta 7.5x16 (Siembra/Fert)', 'Cubierta 5.00x15 (2º Fert)'],
     data: [
       { dist: 17.5, val1: 22.5, val2: 28 },

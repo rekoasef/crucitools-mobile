@@ -1,23 +1,28 @@
 // src/core/theme/colors.ts
 
 export const PALETTE = {
-  crucianelliRed: '#E30613', // Rojo oficial
+  crucianelliRed: '#E30613', // Rojo oficial Crucianelli
+  crucianelliRedDark: '#B3050F', // Rojo más oscuro para patrones técnicos y sombras
   black: '#000000',
   darkGray: '#1A1A1A',
   mediumGray: '#4A4A4A',
   lightGray: '#E5E5E5',
-  ghostWhite: '#F5F7FA', // <--- NUEVO: Gris azulado muy suave para fondo moderno
+  ghostWhite: '#F5F7FA', // Gris azulado muy suave para fondo moderno
   white: '#FFFFFF',
   
   // Feedback
   success: '#28A745', 
   warning: '#FFC107', 
   error: '#DC3545',   
+  
+  // UI Helpers
+  overlay: 'rgba(0, 0, 0, 0.1)',
 };
 
 export const THEME_COLORS = {
   primary: PALETTE.crucianelliRed,
-  background: PALETTE.ghostWhite, // <--- CAMBIO: Fondo general moderno
+  primaryDark: PALETTE.crucianelliRedDark,
+  background: PALETTE.ghostWhite, 
   cardBackground: PALETTE.white,
   
   // Textos Semánticos
@@ -26,17 +31,17 @@ export const THEME_COLORS = {
   textInverse: PALETTE.white,
   
   // Elementos de UI
-  headerBackground: PALETTE.crucianelliRed, // Actualizado para coincidir con el bloque rojo
+  headerBackground: PALETTE.crucianelliRed,
   headerText: PALETTE.white,
   
-  border: '#E2E8F0', // <--- CAMBIO: Un gris más sutil específico para bordes finos
+  border: '#E2E8F0', 
   
   // Estados
   activeIcon: PALETTE.crucianelliRed,
   inactiveIcon: PALETTE.mediumGray,
   disabled: PALETTE.lightGray,
   
-  // Colores directos (para compatibilidad)
+  // Colores directos
   darkGray: PALETTE.darkGray,
   mediumGray: PALETTE.mediumGray,
   lightGray: PALETTE.lightGray,
@@ -47,4 +52,5 @@ export const THEME_COLORS = {
   success: PALETTE.success,
   warning: PALETTE.warning,
   error: PALETTE.error,
+  overlay: PALETTE.overlay,
 };
