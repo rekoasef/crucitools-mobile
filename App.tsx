@@ -1,31 +1,29 @@
-// App.tsx
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { AnimatedSplashScreen } from './src/modules/ui/AnimatedSplashScreen'; // Importa el nuevo componente
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { initDatabase } from './src/storage/sqlite';
 import { CruciBot } from './src/ui/components/CruciBot';
 
-// Mantenemos el Splash visible hasta que cargue la DB
+// Mantenemos el Splash nativo visible hasta que la lógica inicial termine
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
-  const [isReady, setIsReady] = useState(false);
+  const [isDbReady, setIsDbReady] = useState(false);
+  const [isSplashFinished, setIsSplashFinished] = useState(false);
 
   useEffect(() => {
     async function prepare() {
       try {
         // 1. Inicializar Base de Datos
         await initDatabase();
-        
-        // 2. Cargar fuentes u otros assets si fuera necesario aquí
-        // await loadFonts();
-        
       } catch (e) {
-        console.warn('Error iniciando la app:', e);
+        console.warn('Error iniciando la base de datos:', e);
       } finally {
-        setIsReady(true);
+        // 2. Cuando la DB está lista, ocultamos el splash nativo de Android
+        setIsDbReady(true);
         await SplashScreen.hideAsync();
       }
     }
@@ -33,15 +31,26 @@ export default function App() {
     prepare();
   }, []);
 
-  if (!isReady) {
-    return null; // O un componente de carga simple si prefieres
+  // Paso 1: Mientras la DB carga, mostramos nada (el splash nativo se encarga)
+  if (!isDbReady) {
+    return null;
   }
 
+  // Paso 2: Si la DB ya cargó pero la animación no terminó, mostramos la animación personalizada
+  if (!isSplashFinished) {
+    return (
+      <AnimatedSplashScreen 
+        onAnimationFinish={() => setIsSplashFinished(true)} 
+      />
+    );
+  }
+
+  // Paso 3: Render final de la App
   return (
-  <SafeAreaProvider>
-    <StatusBar style="light" />
-    <RootNavigator />
-    <CruciBot />
-  </SafeAreaProvider>
+    <SafeAreaProvider>
+      <StatusBar style="dark" /> 
+      <RootNavigator />
+      <CruciBot />
+    </SafeAreaProvider>
   );
 }

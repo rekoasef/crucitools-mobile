@@ -9,8 +9,14 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
-    },
+          "distribution": "internal",
+          "android": {
+            "buildType": "apk"
+          },
+          "env": {
+            "NPM_CONFIG_FORCE": "true"
+          }
+        },
     "production": {
       "autoIncrement": true
     }
