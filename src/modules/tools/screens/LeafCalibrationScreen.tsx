@@ -1,11 +1,32 @@
+// src/modules/tools/screens/LeafCalibrationScreen.tsx
+
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { theme } from '../../../core/theme';
-import { Body, Button, Card, H1, ScreenLayout, Select } from '../../../ui/components';
 
-// Datos de los modelos (Mando Cardánico)
-const CALIBRATION_DATA = [
+// Importaciones directas para asegurar que ningún componente llegue como undefined
+import { Button } from '../../../ui/components/Button';
+import { Card } from '../../../ui/components/Card';
+import { ScreenLayout } from '../../../ui/components/ScreenLayout';
+import { Select } from '../../../ui/components/Select';
+import { Body, H1 } from '../../../ui/components/Typography';
+
+// Interfaces para los datos
+interface PlateConfig {
+  label: string;
+  value: string;
+  seeds: number;
+}
+
+interface ModeloConfig {
+  modelo: string;
+  relacionTransmision: number;
+  vueltasPlaca: number;
+  plates: PlateConfig[];
+}
+
+const CALIBRATION_DATA: ModeloConfig[] = [
   {
     modelo: "GRINGA",
     relacionTransmision: 0.234,
@@ -71,7 +92,7 @@ const CALIBRATION_DATA = [
 const CONSTANTS = { pulsos: 260, vueltasMotor: 10 };
 
 export const LeafCalibrationScreen = () => {
-  const [step, setStep] = useState(0); // Empezamos en 0 para elegir el mando
+  const [step, setStep] = useState(0);
   const [mandoType, setMandoType] = useState<'cardan' | 'elliot' | null>(null);
   const [selectedModelo, setSelectedModelo] = useState('');
   const [selectedPlateValue, setSelectedPlateValue] = useState('');
@@ -142,16 +163,16 @@ export const LeafCalibrationScreen = () => {
             {step === 1 && (
               <View>
                 <Body style={styles.instruction}>1. Seleccione el modelo:</Body>
-                <Card variant="flat">
+                <Card style={{ padding: 10 }}>
                   <Select 
                     label="MÁQUINA"
                     options={CALIBRATION_DATA.map(m => ({ label: m.modelo, value: m.modelo }))}
                     selectedValue={selectedModelo}
-                    onValueChange={setSelectedModelo}
+                    onValueChange={(val) => setSelectedModelo(val)}
                     placeholder="Elija el modelo..."
                   />
                 </Card>
-                <Button title="SIGUIENTE" disabled={!selectedModelo} onPress={() => setStep(2)} />
+                <Button title="SIGUIENTE" disabled={!selectedModelo} onPress={() => setStep(2)} style={{marginTop: 20}} />
               </View>
             )}
 
@@ -167,29 +188,51 @@ export const LeafCalibrationScreen = () => {
 
             {step === 3 && (
               <View>
-                <Body style={styles.instruction}>3. Verifique valores en el monitor:</Body>
+                <Body style={styles.instruction}>3. Datos de configuración en monitor:</Body>
                 <Card style={styles.checkCard}>
-                  <View style={styles.checkRow}><Text style={styles.checkLabel}>PULSES:</Text><Text style={styles.checkValue}>{CONSTANTS.pulsos}</Text></View>
+                  <View style={styles.checkRow}>
+                    <Text style={styles.checkLabel}>PULSOS:</Text>
+                    <Text style={styles.checkValue}>{CONSTANTS.pulsos}</Text>
+                  </View>
                   <View style={styles.divider} />
-                  <View style={styles.checkRow}><Text style={styles.checkLabel}>RELACIÓN:</Text><Text style={styles.checkValue}>{modelInfo?.relacionTransmision}</Text></View>
-                  <View style={styles.divider} />
-                  <View style={styles.checkRow}><Text style={styles.checkLabel}>VUELTAS PLACA:</Text><Text style={styles.checkValue}>{modelInfo?.vueltasPlaca}</Text></View>
+                  <View style={styles.checkRow}>
+                    <Text style={styles.checkLabel}>RELACIÓN DE TRANSMISIÓN:</Text>
+                    <Text style={styles.checkValue}>{modelInfo?.relacionTransmision}</Text>
+                  </View>
                 </Card>
-                <Button title="TODO CORRECTO" onPress={() => setStep(4)} />
+                
+                {/* TEXTO INFORMATIVO SEPARADO PARA VUELTAS DE PLACA */}
+                <View style={styles.infoBox}>
+                  <MaterialCommunityIcons name="information-outline" size={20} color="#546E7A" />
+                  <View style={styles.infoTextContainer}>
+                    <Text style={styles.infoTitle}>Información del sistema:</Text>
+                    <Text style={styles.infoBody}>
+                      Para este modelo, la placa del dosificador realiza <Text style={styles.infoBold}>{modelInfo?.vueltasPlaca} vueltas</Text> de manera automática.
+                    </Text>
+                  </View>
+                </View>
+
+                <Button title="CONTINUAR" onPress={() => setStep(4)} style={{marginTop: 10}} />
               </View>
             )}
 
             {step === 4 && (
               <View>
-                <Body style={styles.instruction}>4. Seleccione la placa:</Body>
-                <Card variant="flat" style={{marginBottom: 20}}>
-                   <Select label="TIPO DE PLACA" options={modelInfo?.plates || []} selectedValue={selectedPlateValue} onValueChange={setSelectedPlateValue} placeholder="Alvéolos..." />
+                <Body style={styles.instruction}>4. Seleccione la placa para el conteo:</Body>
+                <Card style={{ padding: 10, marginBottom: 20 }}>
+                   <Select 
+                    label="TIPO DE PLACA" 
+                    options={modelInfo?.plates || []} 
+                    selectedValue={selectedPlateValue}
+                    onValueChange={(val) => setSelectedPlateValue(val)} 
+                    placeholder="Alvéolos..." 
+                  />
                 </Card>
                 {seedResult && (
                   <Card style={styles.resultCard}>
-                    <Text style={styles.resultLabel}>EL MONITOR DEBE MARCAR:</Text>
+                    <Text style={styles.resultLabel}>DEBEMOS RECOGER LAS SEMILLAS QUE TIRA EL DOSIFICADOR Y CONTAR:</Text>
                     <View style={styles.resultRow}><Text style={styles.resultValue}>{seedResult.seeds}</Text><Text style={styles.resultUnit}>semillas</Text></View>
-                    <Text style={styles.resultFooter}>Totales por cada sección (10 vueltas)</Text>
+                    <Text style={styles.resultFooter}>Totales por cada cuerpo</Text>
                   </Card>
                 )}
               </View>
@@ -197,15 +240,14 @@ export const LeafCalibrationScreen = () => {
           </View>
         )}
 
-        {/* FLUJO MANDO ELLIOT (EN DESARROLLO) */}
         {mandoType === 'elliot' && (
           <View style={styles.devContainer}>
-             <MaterialCommunityIcons name="crane" size={80} color="#CCC" />
-             <H1 style={{color: '#999', marginTop: 20}}>MANDO ELLIOT</H1>
-             <Body style={{textAlign: 'center', color: '#AAA', marginTop: 10}}>
-                Esta funcionalidad se habilitará próximamente cuando la información técnica esté disponible.
-             </Body>
-             <Button title="VOLVER" style={{marginTop: 30, width: '100%'}} onPress={reset} />
+              <MaterialCommunityIcons name="crane" size={80} color="#CCC" />
+              <H1>MANDO ELLIOT</H1>
+              <Body style={{textAlign: 'center', color: '#AAA', marginTop: 10}}>
+                Esta funcionalidad se habilitará próximamente.
+              </Body>
+              <Button title="VOLVER" style={{marginTop: 30, width: '100%'}} onPress={reset} />
           </View>
         )}
       </View>
@@ -218,8 +260,6 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   resetBadge: { backgroundColor: theme.colors.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, flexDirection: 'row', alignItems: 'center' },
   resetText: { color: 'white', fontWeight: 'bold', fontSize: 10, marginLeft: 4 },
-  
-  // Selección de Mando
   mandoSelection: { marginTop: 10 },
   mandoOption: { 
     flexDirection: 'row', 
@@ -235,13 +275,11 @@ const styles = StyleSheet.create({
   mandoOptionElliot: { backgroundColor: '#F5F5F5', borderColor: '#DDD' },
   mandoTitle: { fontSize: 18, fontWeight: 'bold', marginLeft: 15, color: theme.colors.textPrimary },
   devTag: { fontSize: 10, color: theme.colors.primary, fontWeight: 'bold', marginLeft: 15, marginTop: 2 },
-  
-  // Flujo pasos
   stepsIndicator: { flexDirection: 'row', justifyContent: 'center', marginBottom: 30 },
   stepDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#E0E0E0', marginHorizontal: 4 },
   stepDotActive: { backgroundColor: theme.colors.primary, width: 20 },
   instruction: { marginBottom: 15, color: theme.colors.textPrimary, fontWeight: 'bold', fontSize: 15 },
-  instructionCard: { padding: 35, alignItems: 'center', marginBottom: 20 },
+  instructionCard: { padding: 35, alignItems: 'center', marginBottom: 20, backgroundColor: 'white', borderRadius: 12 },
   stepText: { textAlign: 'center', marginTop: 20, fontSize: 18, color: '#333', lineHeight: 28 },
   bold: { fontWeight: '900', color: theme.colors.primary },
   checkCard: { padding: 20, marginBottom: 15 },
@@ -249,8 +287,25 @@ const styles = StyleSheet.create({
   checkLabel: { fontWeight: 'bold', color: '#777', fontSize: 13 },
   checkValue: { fontSize: 22, fontWeight: 'bold', color: theme.colors.primary },
   divider: { height: 1, backgroundColor: '#F0F0F0' },
+  
+  // Estilos del bloque informativo
+  infoBox: { 
+    backgroundColor: '#ECEFF1', 
+    padding: 15, 
+    borderRadius: 10, 
+    flexDirection: 'row', 
+    alignItems: 'flex-start',
+    borderLeftWidth: 4,
+    borderLeftColor: '#90A4AE',
+    marginBottom: 20
+  },
+  infoTextContainer: { marginLeft: 10, flex: 1 },
+  infoTitle: { fontWeight: 'bold', color: '#455A64', fontSize: 13, marginBottom: 2 },
+  infoBody: { color: '#546E7A', fontSize: 14, lineHeight: 20 },
+  infoBold: { fontWeight: 'bold', color: '#000' },
+
   resultCard: { backgroundColor: theme.colors.darkGray, padding: 30, alignItems: 'center', borderLeftWidth: 6, borderLeftColor: theme.colors.primary, borderRadius: 12 },
-  resultLabel: { color: 'white', opacity: 0.8, fontSize: 12, fontWeight: 'bold' },
+  resultLabel: { color: 'white', opacity: 0.8, fontSize: 11, fontWeight: 'bold', textAlign: 'center' },
   resultRow: { flexDirection: 'row', alignItems: 'baseline', marginVertical: 15 },
   resultValue: { fontSize: 75, fontWeight: 'bold', color: 'white' },
   resultUnit: { color: theme.colors.primary, fontSize: 22, marginLeft: 10, fontWeight: 'bold' },
